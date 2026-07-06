@@ -1,0 +1,259 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RugBuster Base - Base Mainnet Security Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07090d;
+    --panel: #101722;
+    --panel2: #151d2a;
+    --line: rgba(0, 130, 255, 0.18);
+    --accent: #2f80ff;
+    --accent2: #23d18b;
+    --warn: #ffb020;
+    --text: #f4f7fb;
+    --muted: #95a3b8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background:
+      linear-gradient(rgba(47,128,255,0.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(47,128,255,0.055) 1px, transparent 1px),
+      var(--bg);
+    background-size: 56px 56px;
+    color: var(--text);
+    font-family: Rajdhani, sans-serif;
+    font-size: 18px;
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px);
+  }
+  header, main, footer { position: relative; z-index: 1; }
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px clamp(18px, 5vw, 56px);
+    background: rgba(7, 9, 13, 0.9);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(12px);
+  }
+  .logo, h1, h2, h3, .metric-value, .badge { font-family: Orbitron, monospace; }
+  .logo { color: var(--accent); font-weight: 900; letter-spacing: 3px; text-decoration: none; }
+  nav a { color: var(--muted); text-decoration: none; font-family: "Share Tech Mono", monospace; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+  .navlinks { display: flex; gap: 26px; align-items: center; }
+  .hero { min-height: 88vh; display: grid; align-items: center; padding: 86px clamp(18px, 6vw, 72px) 56px; }
+  .eyebrow { color: var(--accent2); font-family: "Share Tech Mono", monospace; font-size: 12px; letter-spacing: 5px; text-transform: uppercase; }
+  h1 { font-size: clamp(48px, 9vw, 112px); line-height: 0.92; margin: 22px 0 20px; letter-spacing: 0; }
+  h1 span { color: var(--accent); text-shadow: 0 0 34px rgba(47,128,255,0.55); }
+  .sub { max-width: 720px; color: var(--muted); font-size: clamp(18px, 2.2vw, 24px); line-height: 1.55; }
+  .actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 34px; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 13px 24px;
+    border: 1px solid var(--accent);
+    color: var(--text);
+    text-decoration: none;
+    font-family: Orbitron, monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: rgba(47,128,255,0.08);
+  }
+  .btn.primary { background: var(--accent); color: #03060b; box-shadow: 0 0 34px rgba(47,128,255,0.35); }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    border: 1px solid rgba(35,209,139,0.45);
+    color: var(--accent2);
+    padding: 8px 12px;
+    margin-top: 28px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    background: rgba(35,209,139,0.06);
+  }
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    background: rgba(16,23,34,0.82);
+  }
+  .metric { padding: 26px clamp(16px, 3vw, 34px); border-right: 1px solid var(--line); min-height: 116px; }
+  .metric:last-child { border-right: none; }
+  .metric-value { color: var(--accent); font-size: clamp(24px, 4vw, 38px); line-height: 1; overflow-wrap: anywhere; }
+  .metric-label { margin-top: 10px; color: var(--muted); font-family: "Share Tech Mono", monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
+  section { padding: 86px clamp(18px, 6vw, 72px); max-width: 1280px; margin: 0 auto; }
+  .section-kicker { color: var(--accent2); font-family: "Share Tech Mono", monospace; letter-spacing: 4px; font-size: 11px; text-transform: uppercase; }
+  h2 { margin: 12px 0 18px; font-size: clamp(28px, 5vw, 52px); }
+  .grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; margin-top: 34px; border: 1px solid var(--line); }
+  .module, .terminal {
+    background: rgba(16,23,34,0.92);
+    border: 1px solid rgba(47,128,255,0.08);
+    padding: 24px;
+    min-height: 178px;
+  }
+  .module h3 { margin: 0 0 12px; color: var(--text); font-size: 14px; letter-spacing: 1px; }
+  .module p, .copy { color: var(--muted); line-height: 1.65; }
+  .terminal { font-family: "Share Tech Mono", monospace; color: var(--muted); max-width: 860px; margin-top: 28px; }
+  .terminal strong { color: var(--accent2); font-weight: 400; }
+  .address { overflow-wrap: anywhere; color: var(--text); }
+  footer { border-top: 1px solid var(--line); padding: 28px clamp(18px, 6vw, 72px); color: var(--muted); font-family: "Share Tech Mono", monospace; font-size: 12px; }
+  @media (max-width: 900px) {
+    .navlinks { display: none; }
+    .metrics, .grid { grid-template-columns: 1fr; }
+    .metric { border-right: none; border-bottom: 1px solid var(--line); }
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="#">RUGBUSTER//BASE</a>
+  <div class="navlinks">
+    <a href="#live">Live</a>
+    <a href="#cia">CIA Engine</a>
+    <a href="#contract">Contract</a>
+    <a href="#links">Links</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div>
+    <div class="eyebrow">// Base mainnet token security feed</div>
+    <h1>RugBuster<br><span>Base</span></h1>
+    <p class="sub">Base token intelligence using the RugBuster EVM scanner architecture: live market evidence, bytecode checks, holder/deployer signals, and reviewer-published on-chain attestations.</p>
+    <div class="badge">LIVE ON BASE MAINNET</div>
+    <div class="actions">
+      <a id="scanLink" class="btn primary" href="#links">Scan Endpoint</a>
+      <a id="botLink" class="btn" href="https://t.me/RugBusterAIbot" target="_blank" rel="noopener">Telegram Bot</a>
+      <a class="btn" href="https://basescan.org" target="_blank" rel="noopener">Basescan</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="live" class="metrics">
+    <div class="metric">
+      <div class="metric-value" id="scanCount">Checking</div>
+      <div class="metric-label">Base scans in DB</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value" id="latestVerdict">No data</div>
+      <div class="metric-label">Latest verdict</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value" id="apiState">Pending</div>
+      <div class="metric-label">Base API status</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value">8453</div>
+      <div class="metric-label">Chain ID</div>
+    </div>
+  </div>
+
+  <section id="cia">
+    <div class="section-kicker">// CIA Engine</div>
+    <h2>Five Modules, One Readout</h2>
+    <p class="copy">The Base collector keeps the same CIA Engine structure as the existing RugBuster EVM workers. It does not guess safety from hype; it combines chain facts, liquidity context, and behavioral signals.</p>
+    <div class="grid">
+      <div class="module"><h3>Funding Origin</h3><p>Tracks deployer funding hops and fresh-wallet patterns around the token launch.</p></div>
+      <div class="module"><h3>Holder Cluster</h3><p>Checks concentration risk and early distribution shape when holder data is available.</p></div>
+      <div class="module"><h3>Backdoor Check</h3><p>Inspects bytecode for owner, mint, pause, blacklist, proxy, and drain-style function selectors.</p></div>
+      <div class="module"><h3>Liquidity Status</h3><p>Reads Base pool evidence from supported DEX sources and market-data feeds.</p></div>
+      <div class="module"><h3>Final Verdict</h3><p>Combines module scores into GOOD, WARN, or DANGER, with reasons stored in Postgres.</p></div>
+    </div>
+  </section>
+
+  <section id="contract">
+    <div class="section-kicker">// Verified Contract</div>
+    <h2>RugBusterScanner.sol</h2>
+    <p class="copy">The Base deployment address and Basescan verification link are shown only after the mainnet deployment is complete.</p>
+    <div class="terminal">
+      Contract: <strong class="address" id="contractAddress">Not deployed yet</strong><br>
+      Basescan: <strong id="basescanLinkText">Waiting for verified contract</strong>
+    </div>
+  </section>
+
+  <section id="links">
+    <div class="section-kicker">// Integrations</div>
+    <h2>Bot And API</h2>
+    <p class="copy">Use the Telegram bot for interactive scans, or call the Base scan API once the Railway worker/API URL is live. Scan counts on this page come from `base_scans`; no placeholder totals are displayed.</p>
+    <div class="actions">
+      <a class="btn primary" href="https://t.me/RugBusterAIbot" target="_blank" rel="noopener">Telegram Bot</a>
+      <a id="apiLink" class="btn" href="#">Base API Pending</a>
+      <a class="btn" href="https://github.com/rugbusteraipatrol/RugBuster-Base" target="_blank" rel="noopener">GitHub Repo</a>
+    </div>
+  </section>
+</main>
+
+<footer>RugBuster Base // honest live stats only // no placeholder scan totals</footer>
+
+<script>
+  const API_BASE_URL = "";
+  const CONTRACT_ADDRESS = "";
+
+  const fmt = new Intl.NumberFormat("en-US");
+  const scanCount = document.getElementById("scanCount");
+  const latestVerdict = document.getElementById("latestVerdict");
+  const apiState = document.getElementById("apiState");
+  const apiLink = document.getElementById("apiLink");
+  const scanLink = document.getElementById("scanLink");
+  const contractAddress = document.getElementById("contractAddress");
+  const basescanLinkText = document.getElementById("basescanLinkText");
+
+  if (CONTRACT_ADDRESS) {
+    contractAddress.textContent = CONTRACT_ADDRESS;
+    basescanLinkText.innerHTML = `<a style="color:var(--accent2)" href="https://basescan.org/address/${CONTRACT_ADDRESS}#code" target="_blank" rel="noopener">Verified on Basescan</a>`;
+  }
+
+  async function loadStats() {
+    if (!API_BASE_URL) {
+      scanCount.textContent = "No live feed";
+      apiState.textContent = "Not set";
+      return;
+    }
+
+    const recentUrl = `${API_BASE_URL.replace(/\/$/, "")}/api/recent-scans?chain=base&limit=25`;
+    apiLink.href = recentUrl;
+    apiLink.textContent = "Recent Scans API";
+    scanLink.href = `${API_BASE_URL.replace(/\/$/, "")}/api/scan`;
+
+    try {
+      const health = await fetch(`${API_BASE_URL.replace(/\/$/, "")}/health`);
+      apiState.textContent = health.ok ? "Online" : "Error";
+    } catch {
+      apiState.textContent = "Offline";
+    }
+
+    try {
+      const response = await fetch(recentUrl);
+      const data = await response.json();
+      const items = Array.isArray(data.items) ? data.items : [];
+      scanCount.textContent = items.length ? fmt.format(items.length) : "0";
+      latestVerdict.textContent = items[0]?.verdict || "No data";
+    } catch {
+      scanCount.textContent = "Unavailable";
+      latestVerdict.textContent = "No data";
+    }
+  }
+
+  loadStats();
+  setInterval(loadStats, 60000);
+</script>
+</body>
+</html>
+
