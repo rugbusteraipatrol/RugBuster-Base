@@ -11,7 +11,7 @@ The recent scan feed reads persisted rows from `base_scans`. Do not publish plac
 
 ## Current Production Values
 
-- Railway URL: pending
+- Railway URL: `https://base-api-production-6887.up.railway.app`
 - Scanner contract: pending
 - Basescan verification: pending
 

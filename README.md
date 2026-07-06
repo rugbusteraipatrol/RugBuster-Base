@@ -5,12 +5,13 @@ AI-powered EVM token scanner and on-chain risk attestation layer for Base mainne
 ## Live Links
 
 - Public landing page: `https://rugbusteraipatrol.github.io/RugBuster-Base/`
+- Base API: `https://base-api-production-6887.up.railway.app`
 - Base RPC: `https://mainnet.base.org`
 - Chain ID: `8453`
 - Explorer: `https://basescan.org`
 - Scanner contract: pending mainnet deployment
 - Basescan verification: pending mainnet deployment
-- Live Base scan count: pending first `base_scans` rows
+- Live Base scan count: 1 confirmed `base_scans` row as of 2026-07-06 20:23 UTC; use `/api/recent-scans?chain=base&limit=25` for live data.
 
 This repo ports the existing RugBuster Avalanche/BNB EVM scanner architecture to Base. Stats in the landing page and README should only be updated after the collector has written real rows to the shared Postgres database.
 
