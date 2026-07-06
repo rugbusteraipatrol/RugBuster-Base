@@ -18,6 +18,7 @@ import random
 import time
 import statistics
 import hashlib
+import traceback
 from eth_utils import keccak
 from pathlib import Path
 from collections import defaultdict, Counter
@@ -694,7 +695,7 @@ def get_contract_transactions(address: str, limit: int = 50) -> list:
         "page": 1, "offset": limit, "sort": "asc",
     }
     result = Basescan_get(params)
-    return result if result else []
+    return result if isinstance(result, list) else []
 
 
 def get_token_transfers(address: str, limit: int = 50) -> list:
@@ -704,7 +705,7 @@ def get_token_transfers(address: str, limit: int = 50) -> list:
         "page": 1, "offset": limit, "sort": "asc",
     }
     result = Basescan_get(params)
-    return result if result else []
+    return result if isinstance(result, list) else []
 
 
 def get_account_transactions(address: str, limit: int = 100) -> list:
@@ -714,7 +715,7 @@ def get_account_transactions(address: str, limit: int = 100) -> list:
         "page": 1, "offset": limit, "sort": "asc",
     }
     result = Basescan_get(params)
-    return result if result else []
+    return result if isinstance(result, list) else []
 
 
 def get_BASE_balance(address: str) -> float:
@@ -734,13 +735,13 @@ def get_token_holders(address: str) -> list:
         "contractaddress": address, "page": 1, "offset": 10,
     }
     result = Basescan_get(params)
-    return result if result else []
+    return result if isinstance(result, list) else []
 
 
 def get_token_info_BASE(contract_address: str) -> dict:
     params = {"module": "token", "action": "tokeninfo", "contractaddress": contract_address}
     result = Basescan_get(params)
-    if result and isinstance(result, list) and len(result) > 0:
+    if isinstance(result, list) and len(result) > 0 and isinstance(result[0], dict):
         info = result[0]
         return {
             "name": info.get("tokenName", "Unknown"),
@@ -2346,7 +2347,7 @@ def poll_loop(output_path: Path) -> None:
                             MAX_EUR_TOTAL,
                         )
                 except Exception as e:
-                    log.error("GreÅ¡ka pri procesiranju: %s", e)
+                    log.error("GreÅ¡ka pri procesiranju: %s\n%s", e, traceback.format_exc())
             elif pending_tokens:
                 wait_left = max(0, int(next_scan_at - now))
                 log.info("Queue=%d. SledeÄ‡i scan za joÅ¡ %ds.", len(pending_tokens), wait_left)
