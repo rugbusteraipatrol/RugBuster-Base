@@ -305,8 +305,9 @@ def api_recent_scans():
         return jsonify({"ok": True, "item": item})
 
     db_items: list[dict[str, Any]] = []
+    total_count = len(RECENT_SCANS)
     if not DATABASE_URL or psycopg2 is None:
-        return jsonify({"ok": True, "items": merge_recent_scans(RECENT_SCANS, limit=limit)})
+        return jsonify({"ok": True, "count": total_count, "items": merge_recent_scans(RECENT_SCANS, limit=limit)})
 
     try:
         with psycopg2.connect(DATABASE_URL) as conn:
@@ -321,9 +322,11 @@ def api_recent_scans():
                     (limit,),
                 )
                 db_items = [recent_scan_item(record, created_at) for record, created_at in cur.fetchall()]
-        return jsonify({"ok": True, "items": merge_recent_scans(RECENT_SCANS, db_items, limit=limit)})
+                cur.execute("SELECT COUNT(*) FROM base_scans")
+                total_count = int(cur.fetchone()[0] or 0)
+        return jsonify({"ok": True, "count": total_count, "items": merge_recent_scans(RECENT_SCANS, db_items, limit=limit)})
     except Exception as exc:
-        return jsonify({"ok": True, "warning": str(exc), "items": merge_recent_scans(RECENT_SCANS, limit=limit)})
+        return jsonify({"ok": True, "warning": str(exc), "count": total_count, "items": merge_recent_scans(RECENT_SCANS, limit=limit)})
 
 
 @app.route("/api/scan", methods=["POST", "OPTIONS"])
