@@ -53,6 +53,7 @@ REGISTRY_ADDRESS=
 RECENT_SCAN_FEED_URL=
 RECENT_SCAN_INGEST_TOKEN=
 ONCHAIN_LOG_ENABLED=false
+BOT_PUBLISH_TO_REGISTRY=false
 ```
 
 Base gas is ETH. Collector budget aliases support `MAX_ETH_TOTAL`, `TARGET_ETH_PER_SCAN`, and `ETH_EUR_PRICE_FALLBACK`.
@@ -119,7 +120,7 @@ GitHub Pages serves `docs/index.html`. The page includes:
 - live scan counter hook for `base_scans`
 - deployed contract section
 - CIA Engine five-module explanation
-- Telegram bot and scan endpoint links
+- scan endpoint and live Base feed links
 
 Do not hardcode placeholder scan totals. The landing page reads the live scan count from the Base API.
 

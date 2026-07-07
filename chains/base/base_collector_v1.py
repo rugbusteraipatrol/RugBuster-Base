@@ -84,11 +84,11 @@ BASE_TELEGRAM_CHAT_ID = clean_env_value("BASE_TELEGRAM_CHAT_ID") or clean_env_va
 TELEGRAM_BOT_TOKEN = clean_env_value("BASE_TELEGRAM_BOT_TOKEN") or clean_env_value("TELEGRAM_BOT_TOKEN")
 RECENT_SCAN_FEED_URL = clean_env_value("RECENT_SCAN_FEED_URL", "https://web-production-376bf.up.railway.app/api/recent-scans")
 RECENT_SCAN_INGEST_TOKEN = clean_env_value("RECENT_SCAN_INGEST_TOKEN")
-ONCHAIN_LOG_ENABLED = os.getenv("ONCHAIN_LOG_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
+ONCHAIN_LOG_ENABLED = os.getenv("ONCHAIN_LOG_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
 ONCHAIN_LOG_TO_ADDRESS = clean_env_value("ONCHAIN_LOG_TO_ADDRESS")
 ACTIVITY_LOGGER_ADDRESS = clean_env_value("ACTIVITY_LOGGER_ADDRESS")
 REGISTRY_ADDRESS = clean_env_value("REGISTRY_ADDRESS")
-BOT_PUBLISH_TO_REGISTRY = os.getenv("BOT_PUBLISH_TO_REGISTRY", "true").strip().lower() in {"1", "true", "yes", "on"}
+BOT_PUBLISH_TO_REGISTRY = os.getenv("BOT_PUBLISH_TO_REGISTRY", "false").strip().lower() in {"1", "true", "yes", "on"}
 GECKOTERMINAL_ENABLED = os.getenv("GECKOTERMINAL_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
 GECKOTERMINAL_NEW_POOLS_URL = clean_env_value(
     "GECKOTERMINAL_NEW_POOLS_URL",

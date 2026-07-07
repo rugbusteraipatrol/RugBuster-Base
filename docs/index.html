@@ -1170,8 +1170,7 @@
       </div>
       <div style="margin-top:18px;font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.8;color:var(--text-muted);text-align:left;">
         Portfolio scan uses your connected Base wallet.<br>
-        <span style="color:var(--neon-cyan);">PUBLISH REPORT</span> requires an authorized reviewer wallet.<br>
-        Each module write is confirmed in your wallet and uses ETH for gas from that wallet.
+        Base mode shows live wallet risk locally without Telegram spam or on-chain write prompts.
       </div>
     </div>
   </div>
@@ -1376,8 +1375,8 @@
     </div>
     <div class="feature-card pink">
       <div class="feature-icon">🔔</div>
-      <div class="feature-title">Telegram Alerts</div>
-      <p class="feature-desc">Instant push notifications to your Telegram when threats detected. Configure thresholds, chains, wallets — full control.</p>
+      <div class="feature-title">Live Base Feed</div>
+      <p class="feature-desc">The Base dashboard reads fresh scanner records from the shared database, so routine low-risk scans stay on-site instead of spamming chat channels.</p>
     </div>
   </div>
 </section>
@@ -1428,45 +1427,6 @@
         <div style="display:flex;gap:12px;flex-wrap:wrap;">
           <button onclick="runScan()" class="btn-primary" style="font-size:11px;padding:13px 32px;border:none;cursor:crosshair;">
             ⚡ SCAN TOKEN
-          </button>
-          <button id="authorizeReviewerBtn" onclick="authorizeReviewerWallet()" style="
-            font-family:'Share Tech Mono',monospace;
-            font-size:11px;
-            letter-spacing:2px;
-            padding:12px 20px;
-            background:transparent;
-            border:1px solid rgba(47,128,255,0.22);
-            color:rgba(47,128,255,0.58);
-            cursor:crosshair;
-            transition:all 0.2s;
-          " onmouseover="if(!this.disabled){this.style.color='var(--neon-cyan)'}" onmouseout="if(!this.disabled){this.style.color='rgba(47,128,255,0.58)'}">
-            AUTHORIZE REVIEWER
-          </button>
-          <button id="publishBtn" onclick="publishCurrentReport()" style="
-            font-family:'Share Tech Mono',monospace;
-            font-size:11px;
-            letter-spacing:2px;
-            padding:12px 20px;
-            background:transparent;
-            border:1px solid rgba(47,128,255,0.22);
-            color:rgba(47,128,255,0.58);
-            cursor:crosshair;
-            transition:all 0.2s;
-          " onmouseover="if(!this.disabled){this.style.color='var(--neon-pink)'}" onmouseout="if(!this.disabled){this.style.color='rgba(47,128,255,0.58)'}" disabled>
-            PUBLISH REPORT
-          </button>
-          <button id="sendAlertBtn" onclick="sendTelegramAlert()" style="
-            font-family:'Share Tech Mono',monospace;
-            font-size:11px;
-            letter-spacing:2px;
-            padding:12px 20px;
-            background:transparent;
-            border:1px solid rgba(35,209,139,0.22);
-            color:rgba(35,209,139,0.55);
-            cursor:crosshair;
-            transition:all 0.2s;
-          " onmouseover="if(!this.disabled){this.style.color='var(--neon-green)'}" onmouseout="if(!this.disabled){this.style.color='rgba(35,209,139,0.55)'}" disabled>
-            SEND ALERT
           </button>
           <button onclick="loadExample('apex')" style="
             font-family:'Share Tech Mono',monospace;
@@ -1764,26 +1724,6 @@
     <div id="finalScanAi" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--neon-cyan);line-height:1.7;border:1px solid rgba(47,128,255,0.12);background:rgba(47,128,255,0.035);padding:14px 16px;margin-bottom:20px;"></div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end;">
       <button onclick="closeFinalScanModal()" class="btn-secondary" style="font-size:11px;padding:12px 22px;">CLOSE</button>
-      <button onclick="closeFinalScanModal(); sendTelegramAlert();" id="finalScanAlertBtn" style="
-        font-family:'Share Tech Mono',monospace;
-        font-size:11px;
-        letter-spacing:2px;
-        padding:12px 20px;
-        background:transparent;
-        border:1px solid rgba(35,209,139,0.36);
-        color:var(--neon-green);
-        cursor:crosshair;
-      ">SEND ALERT</button>
-      <button onclick="closeFinalScanModal(); publishCurrentReport();" id="finalScanPublishBtn" style="
-        font-family:'Share Tech Mono',monospace;
-        font-size:11px;
-        letter-spacing:2px;
-        padding:12px 20px;
-        background:transparent;
-        border:1px solid rgba(47,128,255,0.36);
-        color:var(--neon-pink);
-        cursor:crosshair;
-      ">PUBLISH REPORT</button>
     </div>
   </div>
 </div>
@@ -2589,6 +2529,7 @@
 
   function setAlertButtonState(enabled, text = 'SEND ALERT') {
     const btn = document.getElementById('sendAlertBtn');
+    if (!btn) return;
     btn.disabled = !enabled;
     btn.textContent = text;
     btn.style.opacity = enabled ? '1' : '0.6';
@@ -2598,6 +2539,7 @@
 
   function setPublishButtonState(enabled, text = 'PUBLISH REPORT') {
     const btn = document.getElementById('publishBtn');
+    if (!btn) return;
     btn.disabled = !enabled;
     btn.textContent = text;
     btn.style.opacity = enabled ? '1' : '0.6';
