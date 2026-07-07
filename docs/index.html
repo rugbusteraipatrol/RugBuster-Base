@@ -1710,7 +1710,9 @@
     <div style="margin-top:14px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-muted);line-height:1.9;">
       The API exposes compact Base risk intelligence from the private collector corpus without publishing raw evidence.
       Current classifier: <span style="color:var(--neon-cyan);">weighted_v2</span>.
-      Base scanner contract deployment is pending funding for the deployer wallet. No placeholder contract address is shown here.
+      Scanner contract is deployed on Base at
+      <a href="https://basescan.org/address/0x5F30276B3A5079E088Ec3072884286de5a868355" target="_blank" rel="noopener" style="color:var(--neon-pink);text-decoration:none;">0x5F30276B3A5079E088Ec3072884286de5a868355</a>.
+      Basescan source verification is pending a Basescan API key.
     </div>
 
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:18px;">
@@ -1937,7 +1939,7 @@
   // WALLET & PAYMENT LOGIC
   // =====================
   const RECEIVER = 'GwRUadL58katT5SJAeyNZSPFSgJfMP6Tng2dSQDEkhQA';
-  const REGISTRY_ADDRESS = '';
+  const REGISTRY_ADDRESS = '0x5F30276B3A5079E088Ec3072884286de5a868355';
   const REGISTRY_ABI = [
     'function owner() view returns (address)',
     'function authorizedReviewers(address) view returns (bool)',

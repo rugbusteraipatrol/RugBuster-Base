@@ -9,9 +9,10 @@ AI-powered EVM token scanner and on-chain risk attestation layer for Base mainne
 - Base RPC: `https://mainnet.base.org`
 - Chain ID: `8453`
 - Explorer: `https://basescan.org`
-- Scanner contract: pending mainnet deployment
-- Basescan verification: pending mainnet deployment
-- Live Base scan count: 1 confirmed `base_scans` row as of 2026-07-06 20:23 UTC; use `/api/recent-scans?chain=base&limit=25` for live data.
+- Scanner contract: `0x5F30276B3A5079E088Ec3072884286de5a868355`
+- Basescan contract page: `https://basescan.org/address/0x5F30276B3A5079E088Ec3072884286de5a868355`
+- Basescan source verification: pending `BASESCAN_API_KEY`
+- Live Base scan count: 218 confirmed `base_scans` rows as of 2026-07-07 07:16 UTC; use `/api/recent-scans?chain=base&limit=25` for live data.
 
 This repo ports the existing RugBuster Avalanche/BNB EVM scanner architecture to Base. Stats in the landing page and README should only be updated after the collector has written real rows to the shared Postgres database.
 
@@ -77,6 +78,13 @@ Verify on Basescan:
 npx hardhat verify --network base <SCANNER_ADDRESS>
 ```
 
+Production deployment:
+
+```txt
+SCANNER_ADDRESS=0x5F30276B3A5079E088Ec3072884286de5a868355
+DEPLOY_TX=0x42cf163c4a443e6b34543861849ba2df49e87b93fc8bb69363d24528201f712d
+```
+
 ## Railway Worker
 
 `railway.json` starts the Base collector:
@@ -109,9 +117,9 @@ GitHub Pages serves `docs/index.html`. The page includes:
 - dark RugBuster security-tool visual style
 - â€œLive on Base mainnetâ€ badge
 - live scan counter hook for `base_scans`
-- verified contract section
+- deployed contract section
 - CIA Engine five-module explanation
 - Telegram bot and scan endpoint links
 
-Do not hardcode placeholder scan totals. Update `API_BASE_URL` and `CONTRACT_ADDRESS` in `docs/index.html` only after the Base Railway service and verified contract are real.
+Do not hardcode placeholder scan totals. The landing page reads the live scan count from the Base API.
 
