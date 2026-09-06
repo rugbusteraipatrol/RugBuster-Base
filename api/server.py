@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from bridge import publish_score, publish_score_modules, send_telegram_alert  # noqa: E402
 from risk_engine import score_token  # noqa: E402
+from identity import resolve_identity  # noqa: E402
 from network_config import NETWORKS, load_env, resolve_network, resolve_rpc  # noqa: E402
 
 load_env()
@@ -113,6 +114,7 @@ PAIR_ABI = json.loads(
 
 app = Flask(__name__)
 SCAN_CACHE_TTL_SECONDS = 180
+RISK_ENGINE_VERSION = "base_coverage_v2"
 SCAN_CACHE: dict[str, dict[str, Any]] = {}
 PORTFOLIO_SCAN_WORKERS = 3
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -133,7 +135,9 @@ def get_cached_report(address: str) -> dict[str, Any] | None:
     entry = SCAN_CACHE.get(cache_key(address))
     if not entry:
         return None
-    if time.time() - entry["ts"] > SCAN_CACHE_TTL_SECONDS:
+    if (time.time() - entry["ts"] > SCAN_CACHE_TTL_SECONDS
+            or entry["report"].get("risk_engine") != RISK_ENGINE_VERSION
+            or entry["report"].get("network") != NETWORKS[resolve_network()]["label"]):
         SCAN_CACHE.pop(cache_key(address), None)
         return None
     return entry["report"]
@@ -221,7 +225,7 @@ def root():
             "version": "RugBuster-Base-api-v1",
             "network": network,
             "label": NETWORKS[network]["label"],
-            "classifier_version": "weighted_v2",
+            "classifier_version": RISK_ENGINE_VERSION,
             "score_endpoint": "/score?address=0x...",
             "scan_endpoint": "/api/scan",
         }
@@ -243,7 +247,7 @@ def public_label_from_report(report: dict[str, Any]) -> str:
 def compact_score_response(report: dict[str, Any], source: str) -> dict[str, Any]:
     address = report.get("address") or report.get("contract_address") or ""
     risk_flags = list(report.get("rug_reasons") or [])[:4] + list(report.get("speculation_reasons") or [])[:4]
-    risk_percent = report.get("risk_percent") or report.get("rugbuster_BASE_score") or report.get("rug_score")
+    risk_percent = report.get("rug_score")
     return {
         "ok": True,
         "address": Web3.to_checksum_address(address) if Web3.is_address(address) else address,
@@ -253,14 +257,17 @@ def compact_score_response(report: dict[str, Any], source: str) -> dict[str, Any
         "rug_status": report.get("rug_status"),
         "speculation_score": report.get("speculation_score"),
         "speculation_status": report.get("speculation_status"),
-        "risk_engine": report.get("risk_engine") or "rugbuster_BASE_v1",
+        "risk_engine": report.get("risk_engine"),
+        "identity": report.get("identity"),
+        "coverage": report.get("coverage"),
+        "assessed_at": report.get("assessed_at"),
         "risk_percent": risk_percent,
         "rugbuster_BASE_score": risk_percent,
         "rugbuster_BASE_reasons": report.get("rugbuster_BASE_reasons") or report.get("rug_reasons") or [],
         "token_name": report.get("token_name"),
         "token_symbol": report.get("symbol") or report.get("token_symbol"),
         "risk_flags": risk_flags[:6],
-        "classifier": "weighted_v2",
+        "classifier": RISK_ENGINE_VERSION,
         "source": source,
     }
 
@@ -269,30 +276,9 @@ def lookup_cached_score(address: str) -> dict[str, Any] | None:
     cached = get_cached_report(address)
     if cached:
         return compact_score_response(cached, "memory_cache")
-    if not DATABASE_URL or psycopg2 is None:
-        return None
-    try:
-        with psycopg2.connect(DATABASE_URL) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    SELECT full_record
-                    FROM base_scans
-                    WHERE lower(contract_address) = lower(%s)
-                    ORDER BY created_at DESC
-                    LIMIT 1
-                    """,
-                    (address,),
-                )
-                row = cur.fetchone()
-        if not row:
-            return None
-        record = row[0]
-        if isinstance(record, str):
-            record = json.loads(record)
-        return compact_score_response(record, "postgres_cache")
-    except Exception:
-        return None
+    # Legacy collector rows lack versioned security coverage and freshness evidence.
+    # Keep them for the historical feed, never reuse them for a current decision.
+    return None
 
 
 @app.route("/score", methods=["GET"])
@@ -601,7 +587,7 @@ def build_report_from_metadata(address: str, metadata: dict[str, Any], pair_data
         "symbol": metadata["symbol"],
         "decimals": metadata["decimals"],
         "total_supply": metadata["total_supply"],
-        "deployer": None,
+        "deployer": (metadata.get("identity") or {}).get("deployer"),
         "has_liquidity_evidence": bool(pair_data.get("pairAddress")),
         "liquidity_usd": liquidity_usd,
         "fdv": fdv,
@@ -624,7 +610,11 @@ def build_report_from_metadata(address: str, metadata: dict[str, Any], pair_data
         "address": scoring_input["token"],
         "token_name": scoring_input["name"],
         "symbol": scoring_input["symbol"],
-        "risk_engine": "rugbuster_BASE_v1",
+        "risk_engine": RISK_ENGINE_VERSION,
+        "assessed_at": int(time.time()),
+        "identity": metadata.get("identity") or {"status": "UNKNOWN", "deployer": None},
+        "coverage": {"deployer_history": "NOT_CHECKED", "bytecode_security": "NOT_CHECKED",
+                     "holder_concentration": "NOT_CHECKED", "sell_simulation": "NOT_CHECKED"},
         "risk_percent": scores.rug.score,
         "rugbuster_BASE_score": scores.rug.score,
         "rugbuster_BASE_reasons": list(scores.rug.reasons),
@@ -811,15 +801,21 @@ def get_pair_from_factories(web3: Web3, token_address: str, total_supply: int | 
 
 def scan_token(address: str) -> dict[str, Any]:
     web3 = get_web3()
+    network = resolve_network()
+    if web3.eth.chain_id != NETWORKS[network]["chain_id"]:
+        raise RuntimeError("RPC chain does not match configured network")
+    if not web3.eth.get_code(Web3.to_checksum_address(address)):
+        raise ValueError("Address is not a deployed token contract")
     onchain = get_onchain_metadata(web3, address)
+    onchain["identity"] = resolve_identity(web3, address, network)
     pair_source = "none"
     try:
-        best_pair = get_market_data(address)
-        pair_source = "dexscreener"
+        best_pair = get_market_data(address) if network == "base" else None
+        pair_source = "dexscreener" if best_pair else "none"
     except Exception:
-        best_pair = get_pair_from_factories(web3, address, onchain.get("total_supply"))
-        if best_pair:
-            pair_source = "onchain_pair_lookup"
+        # Existing fallback uses a V2 ABI for V3/Aerodrome factories: do not infer depth.
+        best_pair = None
+        pair_source = "market_provider_unavailable"
     onchain["contract_tx_count"] = web3.eth.get_transaction_count(Web3.to_checksum_address(address))
     return build_report_from_metadata(address, onchain, best_pair, pair_source)
 
@@ -897,6 +893,8 @@ def build_portfolio_reports(wallet_address: str, raw_tokens: list[dict[str, Any]
 
 
 def publish_report(report: dict[str, Any]) -> dict[str, Any]:
+    if report.get("rug_score") is None:
+        raise RuntimeError("Cannot publish a registry score without a rug score")
     web3 = get_web3()
     private_key = require_env("PRIVATE_KEY")
     registry_address = require_env("REGISTRY_ADDRESS")
@@ -1022,6 +1020,8 @@ def market_activity_module_score(report: dict[str, Any]) -> int:
 
 
 def publish_report_modules(report: dict[str, Any]) -> dict[str, Any]:
+    if report.get("rug_score") is None:
+        raise RuntimeError("Cannot publish actionable modules with incomplete security coverage")
     web3 = get_web3()
     private_key = require_env("PRIVATE_KEY")
     registry_address = require_env("REGISTRY_ADDRESS")
@@ -1097,6 +1097,8 @@ def verdict_text(report: dict[str, Any]) -> str:
         return "High rug risk. Hard on-chain facts look bad."
     if speculation_status == "HIGH":
         return "High speculation. Market depth looks dangerous and exit liquidity may be too thin."
+    if rug_status in {"UNKNOWN", "INSUFFICIENT_DATA"}:
+        return "Security coverage incomplete. Token safety and deployer history are not established."
     if speculation_status == "UNKNOWN":
         return "Rug score available, but no live liquidity evidence yet."
     if rug_status == "LOW" and speculation_status == "LOW":

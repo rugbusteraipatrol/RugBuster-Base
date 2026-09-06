@@ -16,7 +16,7 @@ def test_missing_metadata_is_insufficient_data_not_elevated():
     assert result.rug.status == "INSUFFICIENT_DATA"
 
 
-def test_aero_like_metadata_scores_low_rug_risk():
+def test_aero_like_metadata_does_not_establish_security():
     result = score_token(
         {
             "name": "Aerodrome",
@@ -34,8 +34,8 @@ def test_aero_like_metadata_scores_low_rug_risk():
         }
     )
 
-    assert result.rug.status == "LOW"
-    assert result.rug.score < 45
+    assert result.rug.status == "INSUFFICIENT_DATA"
+    assert result.rug.score is None
     assert result.speculation.status == "LOW"
 
 
@@ -57,5 +57,5 @@ def test_known_base_asset_skips_fdv_liquidity_ratio_penalty():
         }
     )
 
-    assert result.rug.status == "LOW"
+    assert result.rug.status == "INSUFFICIENT_DATA"
     assert result.speculation.status == "LOW"

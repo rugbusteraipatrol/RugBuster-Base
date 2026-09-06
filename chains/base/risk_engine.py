@@ -67,7 +67,6 @@ def score_BASE_security(metadata: dict[str, Any]) -> ScoreResult:
     top5 = float(metadata.get("v6_top5_concentration_pct") or metadata.get("top5_holder_pct") or 0)
     concentration = str(metadata.get("v6_concentration_risk") or "").upper()
     velocity = float(metadata.get("v6_rug_velocity_score") or metadata.get("rug_velocity_score") or 0)
-    creator_rug_rate = float(metadata.get("creator_rug_rate") or 0)
     holders = int(metadata.get("holders_count") or 0)
     deployer_balance = float(metadata.get("deployer_balance_BASE") or 0)
 
@@ -98,12 +97,7 @@ def score_BASE_security(metadata: dict[str, Any]) -> ScoreResult:
     if metadata.get("v6_is_fast_rug") or velocity >= 0.65:
         score += add_reason(reasons, 20, f"High rug velocity score {velocity}")
 
-    if creator_rug_rate >= 80:
-        score = max(score, 88)
-        reasons.append(f"Deployer history: {creator_rug_rate:.1f}% rug rate")
-    elif creator_rug_rate >= 40:
-        score = max(score, 72)
-        reasons.append(f"Deployer history: {creator_rug_rate:.1f}% rug rate")
+    # Legacy creator_rug_rate is classifier history, not confirmed incident evidence.
 
     if holders and holders < 10:
         score += add_reason(reasons, 8, f"Very few holders ({holders})")
@@ -194,7 +188,14 @@ def score_rug_risk(metadata: dict[str, Any]) -> ScoreResult:
             ][:8],
         )
 
-    return ScoreResult(score=clamp(score), status=risk_status(score), reasons=reasons[:8])
+    final = clamp(score)
+    if risk_status(final) == "LOW":
+        return ScoreResult(
+            score=None,
+            status="INSUFFICIENT_DATA",
+            reasons=["Security and confirmed deployer-history coverage is incomplete; no low-risk verdict", *reasons[:7]],
+        )
+    return ScoreResult(score=final, status=risk_status(final), reasons=reasons[:8])
 
 
 def score_speculation_risk(metadata: dict[str, Any]) -> ScoreResult:
