@@ -1,5 +1,8 @@
 # Base readiness hardening
 
+This is the FIRST hardening checkpoint. See BASE_HISTORY_PILOT.md for the
+subsequent implemented history stage and current limitations.
+
 Status: staged locally on fix/base-readiness, not a production deployment.
 
 The API now fails closed for low-risk claims: ordinary ERC-20 metadata is not

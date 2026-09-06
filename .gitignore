@@ -6,6 +6,8 @@
 # Local data outputs
 data/*.csv
 data/*.jsonl
+data/*.db
+data/*.db-*
 !data/.gitkeep
 avax_collector_state.json
 avax_scan_log.md

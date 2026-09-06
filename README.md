@@ -1,5 +1,13 @@
 ﻿# RugBuster Base
 
+## Current branch: reviewed-history pilot
+
+This branch adds a read-only `POST /api/preflight` endpoint and durable curated
+incident evidence. It is not yet the version running at the production links below.
+See [pilot setup and limits](docs/BASE_HISTORY_PILOT.md).
+The seeded dataset contains ONE reviewed Base incident (BALD), not comprehensive
+Base coverage. UNKNOWN is not an approval. There is no automatic transaction execution.
+
 AI-powered EVM token scanner and on-chain risk attestation layer for Base mainnet.
 
 ## Live Links

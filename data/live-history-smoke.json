@@ -1,0 +1,145 @@
+{
+  "checked_at": 1788711891,
+  "scope": "four-case live smoke, not a holdout benchmark",
+  "results": [
+    {
+      "case": "BALD_reviewed_incident",
+      "elapsed_seconds": 4.823,
+      "http_status": 200,
+      "response": {
+        "address": "0x27D2DECb4bFC9C76F0309b8E88dec3a601Fe25a8",
+        "chain": "base",
+        "coverage": "CURATED_INCIDENTS_ONLY",
+        "decision": "BLOCK",
+        "decision_hash": "7aaaf27e75762933557d60e24e3b8e35a5ee1515f90a612591809bc8c9fa9e6a",
+        "evidence": [
+          {
+            "block_hash": "0x7a59e9fc3904f7d576082c3819e1e09b4a830d4b7f2afbc5794f74d02cef5a3b",
+            "block_number": 2008667,
+            "burn_log_index": 131,
+            "chain_id": 8453,
+            "creation_tx_hash": "0x581e0a28d767c7275072fd2135b331147c83b0933959473816c01bfd147c6761",
+            "deployer": "0xccfa0530b9d52f970d1a2daea670ce58e4176389",
+            "evidence_url": "https://base.blockscout.com/tx/0xd4fce790ac42a5a801bebb220adc2a6f9d9bf99985de6a824638a269c3e52ade",
+            "factory": "0x169c06b4cfb09bfd73a81e6f2bb1eb514d75bb19",
+            "id": "19b1b51a92bea851d733b8397d94940593bb2475c5ddbe7963d5dd8fe1b5ef94",
+            "incident_type": "REPORTED_RUG_WITH_VERIFIED_LIQUIDITY_REMOVAL",
+            "limitations": "Curated report establishes incident classification; liquidity removal alone does not prove fraud.",
+            "pool": "0xe96df8f5ef1a8790415068c798765b07d57643bd",
+            "report_url": "https://www.fairyproof.com/img/researchImg/WR_31Jul-6Aug.pdf",
+            "review_status": "REVIEWED",
+            "timestamp": 1690806681,
+            "token": "0x27d2decb4bfc9c76f0309b8e88dec3a601fe25a8",
+            "transaction_hash": "0xd4fce790ac42a5a801bebb220adc2a6f9d9bf99985de6a824638a269c3e52ade",
+            "verification": "RPC_VERIFIED_CURATED_INCIDENT",
+            "weth_remaining_wei": "375867440111226050288",
+            "weth_removed_bps": 9476,
+            "weth_removed_wei": "6809966019028490636295"
+          }
+        ],
+        "executes_transaction": false,
+        "history_status": "CURATED_CHECKED",
+        "identity": {
+          "block_number": 1933444,
+          "creation_tx_hash": "0x581e0a28d767c7275072fd2135b331147c83b0933959473816c01bfd147c6761",
+          "deployer": "0xccFa0530B9d52f970d1A2dAEa670ce58E4176389",
+          "evidence_url": "https://base.blockscout.com/tx/0x581e0a28d767c7275072fd2135b331147c83b0933959473816c01bfd147c6761",
+          "history_status": "CURATED_CHECKED",
+          "reason": null,
+          "source": "blockscout_and_rpc",
+          "status": "VERIFIED_DIRECT_CREATION"
+        },
+        "ok": true,
+        "policy_version": "base-reviewed-history-v1",
+        "reason_code": "KNOWN_REVIEWED_INCIDENT"
+      },
+      "passed": true
+    },
+    {
+      "case": "USDC_control_not_a_safety_label",
+      "elapsed_seconds": 6.522,
+      "http_status": 200,
+      "response": {
+        "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "chain": "base",
+        "coverage": "CURATED_INCIDENTS_ONLY",
+        "decision": "UNKNOWN",
+        "evidence": [],
+        "executes_transaction": false,
+        "history_status": "CURATED_CHECKED",
+        "identity": {
+          "block_number": 2797221,
+          "creation_tx_hash": "0x8aa214f98bcf2984add809d10232135cccc4d6ab97d8477e66475d8bf68def34",
+          "deployer": "0x6aAFF8af0ae8017725312C388bA3745dfE91185B",
+          "evidence_url": "https://base.blockscout.com/tx/0x8aa214f98bcf2984add809d10232135cccc4d6ab97d8477e66475d8bf68def34",
+          "history_status": "CURATED_CHECKED",
+          "reason": null,
+          "source": "blockscout_and_rpc",
+          "status": "VERIFIED_DIRECT_CREATION"
+        },
+        "ok": true,
+        "policy_version": "base-reviewed-history-v1",
+        "reason_code": "NO_KNOWN_INCIDENT_NOT_PROOF_OF_SAFETY"
+      },
+      "passed": true
+    },
+    {
+      "case": "AERO_control_not_a_safety_label",
+      "elapsed_seconds": 8.343,
+      "http_status": 200,
+      "response": {
+        "address": "0x940181a94A35A4569E4529A3CDfB74e38FD98631",
+        "chain": "base",
+        "coverage": "CURATED_INCIDENTS_ONLY",
+        "decision": "UNKNOWN",
+        "evidence": [],
+        "executes_transaction": false,
+        "history_status": "CURATED_CHECKED",
+        "identity": {
+          "block_number": 3200550,
+          "creation_tx_hash": "0x5727b7b346eb94d6f139e10e7ac922158dacd84f5d2844c01cf815b29d9ba58c",
+          "deployer": "0xe83f922C34A1962e9aE9F52B59e18239764f2818",
+          "evidence_url": "https://base.blockscout.com/tx/0x5727b7b346eb94d6f139e10e7ac922158dacd84f5d2844c01cf815b29d9ba58c",
+          "history_status": "CURATED_CHECKED",
+          "reason": null,
+          "source": "blockscout_and_rpc",
+          "status": "VERIFIED_DIRECT_CREATION"
+        },
+        "ok": true,
+        "policy_version": "base-reviewed-history-v1",
+        "reason_code": "NO_KNOWN_INCIDENT_NOT_PROOF_OF_SAFETY"
+      },
+      "passed": true
+    },
+    {
+      "case": "Leet_pool_factory_attribution",
+      "elapsed_seconds": 4.261,
+      "http_status": 200,
+      "response": {
+        "address": "0xE96df8F5ef1A8790415068c798765b07D57643bd",
+        "chain": "base",
+        "coverage": "CURATED_INCIDENTS_ONLY",
+        "decision": "UNKNOWN",
+        "evidence": [],
+        "executes_transaction": false,
+        "history_status": "NOT_CHECKED",
+        "identity": {
+          "block_number": 1933883,
+          "creation_tx_hash": "0x6f66702948c22b4cabe62138ea2dce3f8f595d48b510e0fc56c913645e6257f7",
+          "deployer": null,
+          "evidence_url": "https://base.blockscout.com/tx/0x6f66702948c22b4cabe62138ea2dce3f8f595d48b510e0fc56c913645e6257f7",
+          "history_status": "NOT_CHECKED",
+          "reason": "FACTORY_TRACE_REQUIRED",
+          "reported_creator": "0x169C06b4cfB09bFD73A81e6f2Bb1eB514D75bB19",
+          "source": "blockscout_and_rpc",
+          "status": "UNKNOWN",
+          "transaction_sender": "0xccFa0530B9d52f970d1A2dAEa670ce58E4176389"
+        },
+        "ok": true,
+        "policy_version": "base-reviewed-history-v1",
+        "reason_code": "IDENTITY_NOT_ATTRIBUTABLE"
+      },
+      "passed": true
+    }
+  ]
+}

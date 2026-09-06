@@ -6,6 +6,33 @@ import requests
 from web3 import Web3
 
 
+def verified_factory_trace(web3, tx_hash, token, factory, tx):
+    """Verify CREATE provenance, never equate a shared factory with its users."""
+    try:
+        response = web3.provider.make_request("debug_traceTransaction", [tx_hash, {"tracer": "callTracer", "timeout": "10s"}])
+        root = response.get("result")
+        if not isinstance(root, dict) or root.get("error"):
+            return False
+        if (str(root.get("from", "")).lower() != str(tx.get("from", "")).lower()
+                or str(root.get("to", "")).lower() != str(tx.get("to", "")).lower()):
+            return False
+        pending = [root]
+        matches = []
+        visited = 0
+        while pending and visited < 10000:
+            call = pending.pop()
+            visited += 1
+            if not isinstance(call, dict) or call.get("error"):
+                continue
+            if str(call.get("type", "")).upper() in {"CREATE", "CREATE2"}:
+                if str(call.get("to", "")).lower() == token.lower():
+                    matches.append(str(call.get("from", "")).lower())
+            pending.extend(call.get("calls") or [])
+        return not pending and matches == [factory.lower()]
+    except Exception:
+        return False
+
+
 def resolve_identity(web3, address, network="base"):
     unknown = {"status": "UNKNOWN", "deployer": None, "history_status": "NOT_CHECKED"}
     try:
@@ -36,6 +63,11 @@ def resolve_identity(web3, address, network="base"):
                     "source": "blockscout_and_rpc", "block_number": receipt["blockNumber"]}
         created = receipt.get("contractAddress")
         if tx.get("to") or not created:
+            if verified_factory_trace(web3, tx_hash, token, creator, tx):
+                return {**unknown, **evidence, "status": "VERIFIED_FACTORY_CREATION",
+                        "factory_address": Web3.to_checksum_address(creator),
+                        "transaction_sender": tx.get("from"),
+                        "reason": "FACTORY_USER_ATTRIBUTION_REQUIRED"}
             return {**unknown, **evidence, "reason": "FACTORY_TRACE_REQUIRED",
                     "reported_creator": creator, "transaction_sender": tx.get("from")}
         if (str(created).lower() != token.lower()

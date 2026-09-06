@@ -136,3 +136,41 @@ def test_cache_expired_rejected(monkeypatch):
                                    "network": "Base Mainnet"})
     server.SCAN_CACHE[TOKEN]["ts"] = 0
     assert server.get_cached_report(TOKEN) is None
+
+
+def test_factory_trace_preserves_factory_user_separation(provider):
+    w, receipt, tx, record = provider
+    receipt["contractAddress"] = None
+    tx["to"] = CREATOR
+    root = {"type": "CALL", "from": CREATOR, "to": CREATOR,
+            "calls": [{"type": "CREATE2", "from": CREATOR, "to": TOKEN}]}
+    w.provider = SimpleNamespace(make_request=lambda *a: {"result": root})
+    result = identity.resolve_identity(w, TOKEN)
+    assert result["status"] == "VERIFIED_FACTORY_CREATION"
+    assert result["factory_address"] == CREATOR
+    assert result["deployer"] is None
+    root["calls"][0]["error"] = "execution reverted"
+    assert identity.resolve_identity(w, TOKEN)["status"] == "UNKNOWN"
+
+
+def test_preflight_rejects_other_chains_and_bad_payloads():
+    with server.app.test_client() as client:
+        assert client.post("/api/preflight", json=[]).status_code == 400
+        assert client.post("/api/preflight", json={"chain": "solana", "address": TOKEN}).status_code == 400
+
+
+def test_preflight_outage_does_not_allow(monkeypatch):
+    monkeypatch.setattr(server, "get_cached_report", lambda _: None)
+    def fail(*args): raise TimeoutError()
+    monkeypatch.setattr(server, "scan_token", fail)
+    with server.app.test_client() as client:
+        response = client.post("/api/preflight", json={"address": TOKEN})
+    assert response.status_code == 503
+    assert response.json["decision"] == "UNKNOWN"
+
+
+def test_public_scan_cannot_spend_or_notify(monkeypatch):
+    monkeypatch.delenv("BASE_ADMIN_TOKEN", raising=False)
+    with server.app.test_client() as client:
+        for flag in ["publish", "publish_modules", "notify"]:
+            assert client.post("/api/scan", json={"address": TOKEN, flag: True}).status_code == 403

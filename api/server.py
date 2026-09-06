@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 import json
+import hmac
 import os
 import sys
 import time
@@ -24,6 +25,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from bridge import publish_score, publish_score_modules, send_telegram_alert  # noqa: E402
 from risk_engine import score_token  # noqa: E402
 from identity import resolve_identity  # noqa: E402
+from chains.base.history import IncidentStore, history_decision  # noqa: E402
 from network_config import NETWORKS, load_env, resolve_network, resolve_rpc  # noqa: E402
 
 load_env()
@@ -140,7 +142,40 @@ def get_cached_report(address: str) -> dict[str, Any] | None:
             or entry["report"].get("network") != NETWORKS[resolve_network()]["label"]):
         SCAN_CACHE.pop(cache_key(address), None)
         return None
-    return entry["report"]
+    report = entry["report"]
+    # History is never served from the scan cache: deletion/review changes apply now.
+    report["history_decision"] = current_history(report.get("identity") or {}, address)
+    report.setdefault("coverage", {})["deployer_history"] = report["history_decision"]["history_status"]
+    report.setdefault("identity", {})["history_status"] = report["history_decision"]["history_status"]
+    return report
+
+
+def current_history(identity: dict[str, Any], address: str) -> dict[str, Any]:
+    return history_decision(identity, address,
+        IncidentStore(os.getenv("BASE_HISTORY_DB") or ROOT / "data/base-reviewed-incidents.db"),
+        NETWORKS[resolve_network()]["chain_id"])
+
+
+@app.route("/api/preflight", methods=["POST"])
+def preflight():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({"ok": False, "error": "JSON object required"}), 400
+    if payload.get("chain", "base") != "base" or resolve_network() != "base":
+        return jsonify({"ok": False, "error": "Only Base mainnet is supported"}), 400
+    address = str(payload.get("address") or "")
+    if not Web3.is_address(address):
+        return jsonify({"ok": False, "error": "Invalid token address"}), 400
+    try:
+        report = get_cached_report(address)
+        if report is None:
+            report = scan_token(address)
+            put_cached_report(address, report)
+        return jsonify({"ok": True, "address": address, "chain": "base",
+                        "identity": report["identity"], **report["history_decision"],
+                        "executes_transaction": False})
+    except Exception:
+        return jsonify({"ok": False, "decision": "UNKNOWN", "reason_code": "SCAN_UNAVAILABLE"}), 503
 
 
 def put_cached_report(address: str, report: dict[str, Any]) -> None:
@@ -233,6 +268,8 @@ def root():
 
 
 def public_label_from_report(report: dict[str, Any]) -> str:
+    if (report.get("history_decision") or {}).get("decision") == "BLOCK":
+        return "DANGER"
     rug_status = str(report.get("rug_status") or "").upper()
     speculation_status = str(report.get("speculation_status") or "").upper()
     if rug_status == "HIGH" or speculation_status == "HIGH":
@@ -259,6 +296,7 @@ def compact_score_response(report: dict[str, Any], source: str) -> dict[str, Any
         "speculation_status": report.get("speculation_status"),
         "risk_engine": report.get("risk_engine"),
         "identity": report.get("identity"),
+        "history_decision": report.get("history_decision"),
         "coverage": report.get("coverage"),
         "assessed_at": report.get("assessed_at"),
         "risk_percent": risk_percent,
@@ -353,6 +391,11 @@ def api_scan():
     publish_modules = bool(payload.get("publish_modules")) or env_enabled("PUBLISH_MODULES_TO_REGISTRY")
     notify = bool(payload.get("notify")) or env_enabled("TELEGRAM_ALERTS")
     use_cached = bool(payload.get("use_cached"))
+    if publish or publish_modules or notify:
+        expected = os.getenv("BASE_ADMIN_TOKEN", "")
+        supplied = request.headers.get("X-RugBuster-Admin-Token", "")
+        if not expected or not hmac.compare_digest(expected, supplied):
+            return jsonify({"ok": False, "error": "Privileged scan actions require administrator authorization"}), 403
 
     if not Web3.is_address(address):
         return jsonify({"ok": False, "error": "Invalid Base token address"}), 400
@@ -606,14 +649,18 @@ def build_report_from_metadata(address: str, metadata: dict[str, Any], pair_data
     }
 
     scores = score_token(scoring_input)
+    decision = current_history(metadata.get("identity") or {}, address)
+    identity = dict(metadata.get("identity") or {"status": "UNKNOWN", "deployer": None})
+    identity["history_status"] = decision["history_status"]
     return {
         "address": scoring_input["token"],
         "token_name": scoring_input["name"],
         "symbol": scoring_input["symbol"],
         "risk_engine": RISK_ENGINE_VERSION,
         "assessed_at": int(time.time()),
-        "identity": metadata.get("identity") or {"status": "UNKNOWN", "deployer": None},
-        "coverage": {"deployer_history": "NOT_CHECKED", "bytecode_security": "NOT_CHECKED",
+        "identity": identity,
+        "history_decision": decision,
+        "coverage": {"deployer_history": decision["history_status"], "bytecode_security": "NOT_CHECKED",
                      "holder_concentration": "NOT_CHECKED", "sell_simulation": "NOT_CHECKED"},
         "risk_percent": scores.rug.score,
         "rugbuster_BASE_score": scores.rug.score,
@@ -1090,6 +1137,8 @@ def format_score(value: int | None) -> str:
 
 
 def verdict_text(report: dict[str, Any]) -> str:
+    if (report.get("history_decision") or {}).get("decision") == "BLOCK":
+        return "Blocked by reviewed incident-history policy. See linked historical evidence; this is not a full contract audit."
     rug_status = report.get("rug_status") or "UNKNOWN"
     speculation_status = report.get("speculation_status") or "UNKNOWN"
 

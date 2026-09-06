@@ -1,0 +1,12 @@
+[
+  {
+    "name": "BALD",
+    "review_status": "REVIEWED",
+    "token": "0x27D2DECb4bFC9C76F0309b8E88dec3a601Fe25a8",
+    "deployer": "0xccFa0530B9d52f970d1A2dAEa670ce58E4176389",
+    "transaction_hash": "0xd4fce790ac42a5a801bebb220adc2a6f9d9bf99985de6a824638a269c3e52ade",
+    "pool": "0xE96df8F5ef1A8790415068c798765b07D57643bd",
+    "factory": "0x169C06b4cfB09bFD73A81e6f2Bb1eB514D75bB19",
+    "report_url": "https://www.fairyproof.com/img/researchImg/WR_31Jul-6Aug.pdf"
+  }
+]
