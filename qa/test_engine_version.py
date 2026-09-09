@@ -37,8 +37,8 @@ ENGINE_FILE = REPO_ROOT / "chains" / "base" / "risk_engine.py"
 # Bump together with LOCAL_ENGINE_VERSION. Take the new value from the failure
 # message after reviewing the diff, never from a passing run of an unreviewed
 # change.
-EXPECTED_VERSION = "2026.09.1"
-EXPECTED_FINGERPRINT = "c2a3c37773f7cecd"
+EXPECTED_VERSION = "2026.09.2"
+EXPECTED_FINGERPRINT = "713009040738fec0"
 
 
 def fingerprint_of(source: str) -> str:
