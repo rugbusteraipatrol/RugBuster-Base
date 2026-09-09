@@ -275,7 +275,9 @@ def compact_score_response(report: dict[str, Any], source: str) -> dict[str, Any
     # Which code answered, what it could read, and a sentence saying which kind
     # of answer this is. All additive: no verdict field is read or written.
     response.update(build_identity(local_engine_version=LOCAL_ENGINE_VERSION))
-    response["is_known_chain_asset"] = report.get("is_known_chain_asset")
+    known = bool(report.get("is_known_base_asset") or report.get("is_known_chain_asset"))
+    response["is_known_base_asset"] = known
+    response["is_known_chain_asset"] = known
     response["evidence"] = build_evidence(report)
     response.update(describe({**response, "v6": report.get("v6")}))
     return response

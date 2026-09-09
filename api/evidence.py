@@ -89,6 +89,10 @@ def market(report: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _recognised(report: dict[str, Any]) -> bool:
+    return bool(report.get("is_known_base_asset") or report.get("is_known_chain_asset"))
+
+
 def issuer_identity(report: dict[str, Any]) -> dict[str, Any]:
     """Whether we recognise who issued this, by curation and nothing else.
 
@@ -96,7 +100,12 @@ def issuer_identity(report: dict[str, Any]) -> dict[str, Any]:
     someone nobody has identified; treating scale as identity is what let a
     concentrated unverified mint through on the Solana side.
     """
-    if report.get("is_known_chain_asset") is True:
+    # Both names. This service calls it `is_known_base_asset`; the others call
+    # the same fact `is_known_chain_asset`. Reading only the shared-looking one
+    # made every Base token report an unrecognised issuer, including WETH --
+    # the same "two names for one fact" trap that would have silently emptied
+    # the Avalanche deployer figure depending on merge order.
+    if _recognised(report):
         return {
             "status": OK,
             "recognised": True,

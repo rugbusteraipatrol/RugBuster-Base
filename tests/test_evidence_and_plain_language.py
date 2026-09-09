@@ -144,3 +144,31 @@ def test_describing_a_verdict_cannot_change_it():
     result = describe(payload)
     assert payload == before
     assert set(result) == {"verdict_summary", "verdict_basis", "not_established"}
+
+
+# --- one fact, two field names ---------------------------------------------
+
+def test_the_services_own_name_for_a_recognised_asset_is_read():
+    """This service stores it as `is_known_base_asset`; the sibling services
+    call the same fact `is_known_chain_asset`. Reading only the shared-looking
+    name made every Base token, WETH included, report an unrecognised issuer."""
+    record = _record()
+    record.pop("is_known_chain_asset", None)
+    record["is_known_base_asset"] = True
+    assert build_evidence(record)["issuer_identity"]["recognised"] is True
+
+
+def test_either_name_is_accepted():
+    for field in ("is_known_base_asset", "is_known_chain_asset"):
+        record = _record()
+        record.pop("is_known_base_asset", None)
+        record.pop("is_known_chain_asset", None)
+        record[field] = True
+        assert build_evidence(record)["issuer_identity"]["recognised"] is True
+
+
+def test_neither_name_present_is_unrecognised_not_recognised():
+    record = _record()
+    record.pop("is_known_base_asset", None)
+    record.pop("is_known_chain_asset", None)
+    assert build_evidence(record)["issuer_identity"]["recognised"] is False

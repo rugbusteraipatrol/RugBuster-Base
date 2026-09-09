@@ -103,7 +103,7 @@ def _headline(payload: dict[str, Any]) -> tuple[str, str]:
     if powers:
         functions = [str(f) for f in (backdoor.get("backdoor_functions") or []) if f]
         named = ", ".join(functions) if functions else "controller functions"
-        if payload.get("is_known_chain_asset") is True:
+        if payload.get("is_known_base_asset") or payload.get("is_known_chain_asset"):
             return (
                 f"A recognised Base asset. Its contract exposes {named}, "
                 "which is expected for this kind of asset and is reported "
