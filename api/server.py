@@ -299,6 +299,24 @@ def cached_record_is_answerable(record: dict[str, Any]) -> bool:
     return bool(str(record.get("rug_status") or "").strip())
 
 
+LIVE_SCAN_FAILED_MESSAGE = (
+    "The check did not complete: this token could not be read right now. "
+    "That is a failure on our side, not a finding about the token. Try again shortly."
+)
+
+
+def live_scan_failed_response(address: str, exc: Exception) -> dict[str, Any]:
+    """What /score says when nothing cached could answer and the live read failed."""
+    return {
+        "ok": False,
+        "error": "live_scan_failed",
+        "message": LIVE_SCAN_FAILED_MESSAGE,
+        "detail": type(exc).__name__,
+        "address": address,
+        "chain": "base",
+    }
+
+
 def lookup_cached_score(address: str) -> dict[str, Any] | None:
     cached = get_cached_report(address)
     if cached and cached_record_is_answerable(cached):
@@ -341,10 +359,12 @@ def public_score():
     if score:
         return jsonify(score)
 
+    # A failed live read says nothing about the token. It used to answer 404
+    # with the exception text, which a caller reads as "no such token".
     try:
         report = scan_token(address)
     except Exception as exc:
-        return jsonify({"ok": False, "error": str(exc), "address": address}), 404
+        return jsonify(live_scan_failed_response(address, exc)), 502
     put_cached_report(address, report)
     return jsonify(compact_score_response(report, "live_score"))
 
