@@ -288,9 +288,20 @@ def compact_score_response(report: dict[str, Any], source: str) -> dict[str, Any
     return response
 
 
+def cached_record_is_answerable(record: dict[str, Any]) -> bool:
+    """Whether a stored record carries what the public label is derived from.
+
+    The label comes from rug_status. Rows written by the older collector have
+    none, and each one read as UNKNOWN with "0% of the checks ran" -- Base
+    cbBTC on 2026-09-11, while a live scan of the same address produced a
+    verdict. A row that cannot answer is passed over, not served.
+    """
+    return bool(str(record.get("rug_status") or "").strip())
+
+
 def lookup_cached_score(address: str) -> dict[str, Any] | None:
     cached = get_cached_report(address)
-    if cached:
+    if cached and cached_record_is_answerable(cached):
         return compact_score_response(cached, "memory_cache")
     if not DATABASE_URL or psycopg2 is None:
         return None
@@ -313,6 +324,8 @@ def lookup_cached_score(address: str) -> dict[str, Any] | None:
         record = row[0]
         if isinstance(record, str):
             record = json.loads(record)
+        if not isinstance(record, dict) or not cached_record_is_answerable(record):
+            return None
         return compact_score_response(record, "postgres_cache")
     except Exception:
         return None
